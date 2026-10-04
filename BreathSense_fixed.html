@@ -1,0 +1,1959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#09090b">
+
+    <title>BreathSense | MQ-138 VOC Screening Research</title>
+    <meta name="description"
+          content="A research-oriented platform explaining MQ-138 based breath VOC screening and its potential association with disease-related volatile organic compounds.">
+
+    <!-- Set capability classes before first paint so nothing flashes -->
+    <script>
+        (function () {
+            var r = document.documentElement;
+            r.classList.add("js");
+            if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) r.classList.add("motion");
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=Geist:wght@500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        /* =========================================================
+           TOKENS
+           60 / 30 / 10 : zinc surfaces / text / one teal accent.
+           Amber is reserved for warnings only (semantic, not accent).
+           ========================================================= */
+        :root {
+            color-scheme: dark;
+
+            --bg: #09090b;
+            --bg-2: #0d0d10;
+            --surface: rgba(24, 24, 27, 0.55);
+            --surface-solid: #121215;
+            --line: rgba(255, 255, 255, 0.08);
+            --line-2: rgba(255, 255, 255, 0.14);
+
+            --text: #fafafa;
+            --text-2: #a1a1aa;   /* 7.9:1 on --bg */
+            --text-3: #8a8a95;   /* 5.7:1 on --bg */
+
+            --accent: #5cd3bd;
+            --accent-ink: #04201b;
+            --accent-dim: rgba(92, 211, 189, 0.11);
+            --accent-line: rgba(92, 211, 189, 0.4);
+
+            --warn: #e3a95a;
+            --warn-dim: rgba(227, 169, 90, 0.1);
+            --warn-line: rgba(227, 169, 90, 0.35);
+
+            --font-display: "Geist", "Segoe UI", system-ui, -apple-system, sans-serif;
+            --font-body: "DM Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+            --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+            --font-hand: "Caveat", "Segoe Script", cursive;
+
+            --header-h: 64px;
+            --gutter: clamp(20px, 5vw, 40px);
+            --maxw: 1200px;
+            --ease: cubic-bezier(0.22, 0.8, 0.26, 1);
+
+            --z-header: 50;
+            --z-skip: 100;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        * { margin: 0; padding: 0; }
+
+        html {
+            background: var(--bg);
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
+
+        html.menu-open { overflow: hidden; }
+
+        @media (prefers-reduced-motion: no-preference) {
+            html { scroll-behavior: smooth; }
+        }
+
+        body {
+            position: relative;
+            font-family: var(--font-body);
+            font-size: 1rem;
+            line-height: 1.65;
+            color: var(--text-2);
+            -webkit-font-smoothing: antialiased;
+            overflow-x: clip;
+        }
+
+        /* Film grain: fixed, non-interactive, never on a scrolling container */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.045;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        img, svg { display: block; max-width: 100%; }
+
+        a { color: inherit; }
+
+        h1, h2, h3 {
+            font-family: var(--font-display);
+            color: var(--text);
+            font-weight: 600;
+            text-wrap: balance;
+        }
+
+        p { text-wrap: pretty; }
+
+        :focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 3px;
+            border-radius: 6px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+            white-space: nowrap;
+        }
+
+        .sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+        .ic {
+            width: 20px;
+            height: 20px;
+            flex: none;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .skip-link {
+            position: fixed;
+            top: 8px;
+            left: 8px;
+            z-index: var(--z-skip);
+            padding: 12px 18px;
+            border-radius: 10px;
+            background: var(--accent);
+            color: var(--accent-ink);
+            font-weight: 600;
+            text-decoration: none;
+            transform: translateY(-160%);
+            transition: transform 0.25s var(--ease);
+        }
+
+        .skip-link:focus-visible { transform: none; }
+
+        .top-sentinel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 1px;
+            height: 32px;
+            pointer-events: none;
+        }
+
+        /* =========================================================
+           LAYOUT PRIMITIVES
+           ========================================================= */
+        .wrap {
+            width: 100%;
+            max-width: calc(var(--maxw) + 2 * var(--gutter));
+            margin-inline: auto;
+            padding-left: max(var(--gutter), env(safe-area-inset-left));
+            padding-right: max(var(--gutter), env(safe-area-inset-right));
+        }
+
+        .section { padding-block: clamp(72px, 10vw, 128px); }
+
+        .section-head { max-width: 720px; margin-bottom: clamp(32px, 5vw, 56px); }
+
+        .section-title {
+            font-size: clamp(1.75rem, 1.15rem + 2.3vw, 2.75rem);
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+            margin-bottom: 16px;
+        }
+
+        .section-head.tight { margin-bottom: 0; }
+        .flush-top { padding-top: 0; }
+
+        .section-lead { max-width: 62ch; font-size: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem); }
+
+        .split { display: grid; gap: 40px; }
+
+        @media (min-width: 1000px) {
+            .split {
+                grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+                gap: 72px;
+                align-items: start;
+            }
+        }
+
+        /* =========================================================
+           BUTTONS
+           ========================================================= */
+        .btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            min-height: 48px;
+            padding: 14px 26px;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            font: 600 0.9375rem/1 var(--font-display);
+            text-decoration: none;
+            cursor: pointer;
+            overflow: hidden;
+            transition: transform 0.25s var(--ease), background-color 0.25s, border-color 0.25s, color 0.25s;
+        }
+
+        .btn:active { transform: scale(0.98) translateY(1px); }
+
+        .btn .ic { transition: transform 0.25s var(--ease); }
+
+        .btn-primary { background: var(--accent); color: var(--accent-ink); }
+
+        .btn-primary::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.4) 50%, transparent 70%);
+            transform: translateX(-120%);
+            transition: transform 0.7s var(--ease);
+            pointer-events: none;
+        }
+
+        .btn-ghost {
+            color: var(--text);
+            border-color: var(--line-2);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .btn-sm { min-height: 40px; padding: 10px 18px; font-size: 0.875rem; }
+
+        @media (hover: hover) {
+            .btn-primary:hover { background: #7de0cd; }
+            .btn-primary:hover::after { transform: translateX(120%); }
+            .btn:hover .ic { transform: translateX(3px); }
+            .btn-ghost:hover { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.3); }
+        }
+
+        /* =========================================================
+           HEADER  (glass state lives on a pseudo-element so the
+           mobile menu's position:fixed is not trapped by backdrop-filter)
+           ========================================================= */
+        .site-header {
+            position: sticky;
+            top: 0;
+            z-index: var(--z-header);
+            height: var(--header-h);
+            padding-top: env(safe-area-inset-top);
+            box-sizing: content-box;
+        }
+
+        .site-header::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            background: rgba(9, 9, 11, 0.78);
+            -webkit-backdrop-filter: blur(14px) saturate(140%);
+            backdrop-filter: blur(14px) saturate(140%);
+            border-bottom: 1px solid var(--line);
+            box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.03);
+            opacity: 0;
+            transition: opacity 0.35s var(--ease);
+        }
+
+        .site-header.scrolled::before,
+        html.menu-open .site-header::before { opacity: 1; }
+
+        .header-row {
+            height: var(--header-h);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 44px;
+            font: 700 1.25rem/1 var(--font-display);
+            letter-spacing: -0.03em;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .brand b { color: var(--accent); font-weight: 700; }
+        .brand .ic { width: 26px; height: 26px; color: var(--accent); stroke-width: 1.75; }
+
+        .site-nav ul { list-style: none; display: flex; gap: 4px; }
+
+        .site-nav a:not(.btn) {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            min-height: 40px;
+            padding: 0 12px;
+            border-radius: 8px;
+            font: 500 0.9375rem/1 var(--font-body);
+            color: var(--text-2);
+            text-decoration: none;
+            transition: color 0.25s;
+        }
+
+        .site-nav a:not(.btn)::after {
+            content: "";
+            position: absolute;
+            left: 12px;
+            right: 12px;
+            bottom: 4px;
+            height: 1px;
+            background: var(--accent);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.35s var(--ease);
+        }
+
+        .site-nav a[aria-current="true"] { color: var(--text); }
+        .site-nav a[aria-current="true"]::after { transform: scaleX(1); }
+
+        @media (hover: hover) {
+            .site-nav a:not(.btn):hover { color: var(--text); }
+        }
+
+        .menu-btn {
+            display: none;
+            place-items: center;
+            width: 44px;
+            height: 44px;
+            margin-right: -10px;
+            border: 0;
+            border-radius: 10px;
+            background: transparent;
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        .menu-btn .bar {
+            display: block;
+            grid-area: 1 / 1;
+            width: 22px;
+            height: 1.5px;
+            background: currentColor;
+            border-radius: 2px;
+            transition: transform 0.3s var(--ease);
+        }
+
+        .menu-btn .bar:first-child { transform: translateY(-4px); }
+        .menu-btn .bar:last-child { transform: translateY(4px); }
+        .menu-btn[aria-expanded="true"] .bar:first-child { transform: rotate(45deg); }
+        .menu-btn[aria-expanded="true"] .bar:last-child { transform: rotate(-45deg); }
+
+        @media (min-width: 900px) {
+            .site-nav { display: flex; align-items: center; gap: 20px; }
+        }
+
+        @media (max-width: 899.98px) {
+            .menu-btn { display: grid; }
+
+            .site-nav {
+                position: fixed;
+                top: calc(var(--header-h) + env(safe-area-inset-top));
+                left: 0;
+                right: 0;
+                height: calc(100dvh - var(--header-h) - env(safe-area-inset-top));
+                display: flex;
+                flex-direction: column;
+                padding: 12px max(var(--gutter), env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) max(var(--gutter), env(safe-area-inset-left));
+                background: var(--bg);
+                overflow-y: auto;
+                opacity: 0;
+                visibility: hidden;
+                transform: translateY(-8px);
+                transition: opacity 0.3s var(--ease), transform 0.3s var(--ease), visibility 0s linear 0.3s;
+            }
+
+            .site-nav.open {
+                opacity: 1;
+                visibility: visible;
+                transform: none;
+                transition-delay: 0s;
+            }
+
+            .site-nav ul { flex-direction: column; gap: 0; }
+
+            .site-nav a:not(.btn) {
+                width: 100%;
+                min-height: 60px;
+                padding: 0 2px;
+                border-radius: 0;
+                border-bottom: 1px solid var(--line);
+                font: 500 1.25rem/1 var(--font-display);
+            }
+
+            .site-nav a:not(.btn)::after { display: none; }
+            .site-nav a[aria-current="true"] { color: var(--accent); }
+
+            .site-nav .nav-cta { margin-top: 24px; min-height: 52px; }
+        }
+
+        /* =========================================================
+           HERO  (asymmetric: copy left, signal visual right)
+           ========================================================= */
+        .hero {
+            position: relative;
+            min-height: 100dvh;
+            display: grid;
+            align-items: center;
+            margin-top: calc(-1 * (var(--header-h) + env(safe-area-inset-top)));
+            padding-block: calc(var(--header-h) + env(safe-area-inset-top) + 32px) 48px;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+            background-size: 56px 56px;
+            -webkit-mask-image: radial-gradient(ellipse 75% 65% at 72% 38%, #000 15%, transparent 75%);
+            mask-image: radial-gradient(ellipse 75% 65% at 72% 38%, #000 15%, transparent 75%);
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            width: min(560px, 110vw);
+            aspect-ratio: 1;
+            right: -180px;
+            top: 4%;
+            border: 1px solid var(--line);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .hero > .wrap { position: relative; z-index: 1; }
+
+        .hero-grid { display: grid; gap: 48px; align-items: center; }
+
+        @media (min-width: 1000px) {
+            .hero-grid { grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: 64px; }
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 14px;
+            margin-bottom: 24px;
+            border: 1px solid var(--line-2);
+            border-radius: 18px;
+            background: var(--surface);
+            font: 500 0.8125rem/1.3 var(--font-mono);
+            color: var(--text-2);
+        }
+
+        .badge i {
+            width: 7px;
+            height: 7px;
+            flex: none;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 1.2rem + 5.2vw, 4.5rem);
+            font-weight: 700;
+            line-height: 1.02;
+            letter-spacing: -0.04em;
+            margin-bottom: 24px;
+            max-width: 14ch;
+        }
+
+        .hero-lead {
+            max-width: 54ch;
+            font-size: clamp(1rem, 0.95rem + 0.3vw, 1.1875rem);
+            margin-bottom: 36px;
+        }
+
+        .cta-wrap { position: relative; }
+
+        .cta-row { display: flex; flex-wrap: wrap; gap: 12px; }
+
+        .cta-row .btn { flex: 1 1 100%; }
+
+        @media (min-width: 480px) {
+            .cta-row .btn { flex: 0 0 auto; padding-inline: 32px; }
+        }
+
+        .hand-note { display: none; }
+
+        @media (min-width: 720px) {
+            .cta-wrap { padding-bottom: 60px; }
+
+            .hand-note {
+                position: absolute;
+                top: calc(100% + 4px);
+                left: 28px;
+                display: flex;
+                align-items: flex-start;
+                gap: 6px;
+                color: var(--accent);
+                pointer-events: none;
+            }
+
+            .hand-note svg { width: 40px; height: 52px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+            .hand-note span {
+                margin-top: 18px;
+                font: 500 1.5rem/1 var(--font-hand);
+                color: var(--text-2);
+                transform: rotate(-3deg);
+            }
+        }
+
+        /* Hero signal panel */
+        .signal {
+            position: relative;
+            border: 1px solid var(--line-2);
+            border-radius: 20px;
+            padding: clamp(16px, 2.4vw, 24px);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent), var(--surface);
+            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .signal-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+            font: 500 0.8125rem/1.3 var(--font-mono);
+            color: var(--text);
+        }
+
+        .signal-head .pill {
+            margin-left: auto;
+            padding: 3px 10px;
+            border: 1px solid var(--line-2);
+            border-radius: 999px;
+            color: var(--text-3);
+        }
+
+        .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex: none; }
+
+        .signal-svg { width: 100%; height: auto; overflow: visible; }
+
+        .g-line { stroke: rgba(255, 255, 255, 0.07); stroke-width: 1; }
+        .g-phase { stroke: rgba(255, 255, 255, 0.16); stroke-width: 1; stroke-dasharray: 3 5; }
+        .g-base { stroke: rgba(255, 255, 255, 0.3); stroke-width: 1; stroke-dasharray: 4 6; }
+        .signal-area { fill: url(#sigFill); }
+        .signal-curve { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 0; }
+        .vp { fill: var(--accent); opacity: 0.7; transform-box: fill-box; transform-origin: center; }
+        .vp.alt { fill: #fff; opacity: 0.35; }
+
+        .signal-phases {
+            display: grid;
+            grid-template-columns: 19fr 44fr 37fr;
+            margin-top: 10px;
+            font: 500 0.75rem/1.3 var(--font-mono);
+            color: var(--text-3);
+        }
+
+        .signal figcaption {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--line);
+            font-size: 0.8125rem;
+            line-height: 1.55;
+            color: var(--text-3);
+        }
+
+        /* Hero footer: ruled stats + scroll cue */
+        .hero-foot {
+            display: grid;
+            gap: 20px;
+            margin-top: clamp(40px, 6vw, 64px);
+            padding-top: 24px;
+            border-top: 1px solid var(--line);
+        }
+
+        .hero-stats { list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); }
+
+        .hero-stats li { padding-left: 14px; border-left: 1px solid var(--line-2); }
+
+        .hero-stats strong {
+            display: block;
+            font: 500 clamp(1.5rem, 1.2rem + 1.2vw, 2rem)/1.1 var(--font-mono);
+            color: var(--text);
+            letter-spacing: -0.03em;
+        }
+
+        .hero-stats span { display: block; margin-top: 4px; font-size: 0.8125rem; line-height: 1.4; color: var(--text-3); }
+
+        .credit { max-width: 70ch; font-size: 0.8125rem; line-height: 1.6; color: var(--text-3); }
+        .credit b { font-weight: 500; color: var(--text-2); }
+
+        .scroll-cue { display: none; }
+
+        @media (min-width: 900px) {
+            .hero-foot { grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 32px 48px; }
+            .hero-stats { max-width: 560px; }
+            .credit { grid-column: 1 / -1; max-width: none; }
+
+            .scroll-cue {
+                grid-column: 2;
+                grid-row: 1;
+                display: inline-flex;
+                align-items: center;
+                gap: 12px;
+                font: 500 0.75rem/1 var(--font-mono);
+                color: var(--text-3);
+                text-decoration: none;
+            }
+
+            .scroll-cue i { position: relative; width: 1px; height: 40px; background: var(--line-2); overflow: hidden; }
+            .scroll-cue i::after { content: ""; position: absolute; inset: 0; background: var(--accent); transform: scaleY(0.35); transform-origin: top; }
+        }
+
+        /* =========================================================
+           NOTICE
+           ========================================================= */
+        .notice-band { padding-block: 0 clamp(24px, 4vw, 40px); }
+
+        .notice {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr);
+            gap: 16px;
+            padding: clamp(18px, 2.4vw, 24px);
+            border: 1px solid var(--warn-line);
+            border-radius: 16px;
+            background: var(--warn-dim);
+            color: var(--text-2);
+        }
+
+        .notice .ic { margin-top: 2px; color: var(--warn); }
+        .notice strong { color: var(--text); font-weight: 600; }
+        .notice p { max-width: 90ch; }
+
+        /* =========================================================
+           PANELS
+           ========================================================= */
+        .panel {
+            padding: clamp(22px, 3vw, 36px);
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 60%), var(--surface);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+
+        .panel h3 { font-size: clamp(1.25rem, 1.1rem + 0.5vw, 1.5rem); letter-spacing: -0.02em; margin: 18px 0 12px; }
+
+        .icon-tile {
+            display: grid;
+            place-items: center;
+            width: 44px;
+            height: 44px;
+            border: 1px solid var(--accent-line);
+            border-radius: 12px;
+            background: var(--accent-dim);
+            color: var(--accent);
+            flex: none;
+        }
+
+        .icon-tile .ic { width: 22px; height: 22px; }
+
+        .tech-grid { display: grid; gap: 20px; }
+
+        @media (min-width: 900px) {
+            .tech-grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 24px; }
+        }
+
+        .gas-list { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+
+        .gas {
+            padding: 7px 14px;
+            border: 1px solid var(--line-2);
+            border-radius: 999px;
+            font: 500 0.8125rem/1.3 var(--font-mono);
+            color: var(--text);
+        }
+
+        .kv-list { margin-top: 24px; border-top: 1px solid var(--line); }
+
+        .kv {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 4px 16px;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .kv dt { font: 600 1rem/1.3 var(--font-display); color: var(--text); }
+        .kv dd { font: 400 0.8125rem/1.3 var(--font-mono); color: var(--text-3); }
+
+        /* =========================================================
+           CONDITIONS  (sticky controls left, divided list right)
+           ========================================================= */
+        .conditions { background: var(--bg-2); border-block: 1px solid var(--line); }
+
+        .controls { display: grid; gap: 16px; margin-top: 32px; }
+
+        @media (min-width: 1000px) {
+            .controls-col { position: sticky; top: calc(var(--header-h) + 32px); }
+        }
+
+        .field-label { font: 500 0.875rem/1.3 var(--font-body); color: var(--text); }
+
+        .field { position: relative; display: block; margin-top: 8px; }
+
+        .field > .ic { position: absolute; left: 16px; top: 50%; width: 20px; height: 20px; transform: translateY(-50%); color: var(--text-3); pointer-events: none; }
+
+        .field input {
+            width: 100%;
+            height: 52px;
+            padding: 0 48px 0 46px;
+            border: 1px solid var(--line-2);
+            border-radius: 12px;
+            background: var(--surface-solid);
+            color: var(--text);
+            font: 400 1rem/1 var(--font-body); /* 16px stops iOS zoom-on-focus */
+            transition: border-color 0.25s, box-shadow 0.25s;
+        }
+
+        .field input::placeholder { color: var(--text-3); }
+
+        .field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-dim); }
+
+        .search-clear {
+            position: absolute;
+            right: 4px;
+            top: 50%;
+            display: grid;
+            place-items: center;
+            width: 44px;
+            height: 44px;
+            transform: translateY(-50%);
+            border: 0;
+            border-radius: 10px;
+            background: transparent;
+            color: var(--text-2);
+            cursor: pointer;
+        }
+
+        .search-clear[hidden] { display: none; }
+
+        .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 40px;
+            padding: 0 14px;
+            border: 1px solid var(--line-2);
+            border-radius: 999px;
+            background: transparent;
+            color: var(--text-2);
+            font: 500 0.875rem/1 var(--font-body);
+            cursor: pointer;
+            transition: background-color 0.25s, border-color 0.25s, color 0.25s;
+        }
+
+        .chip span { font: 400 0.75rem/1 var(--font-mono); color: var(--text-3); }
+
+        .chip[aria-pressed="true"] { background: var(--accent-dim); border-color: var(--accent-line); color: var(--accent); }
+        .chip[aria-pressed="true"] span { color: var(--accent); }
+
+        @media (hover: hover) {
+            .chip:hover { border-color: rgba(255, 255, 255, 0.3); color: var(--text); }
+            .chip[aria-pressed="true"]:hover { color: var(--accent); border-color: var(--accent); }
+            .search-clear:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+        }
+
+        .result-count { font: 400 0.8125rem/1.3 var(--font-mono); color: var(--text-3); }
+
+        .cond-list { list-style: none; border-bottom: 1px solid var(--line); }
+
+        .cond {
+            display: grid;
+            grid-template-columns: 44px minmax(0, 1fr);
+            gap: 16px;
+            padding: 24px 0;
+            border-top: 1px solid var(--line);
+        }
+
+        .cond[hidden] { display: none; }
+
+        .cond-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+
+        .cond h3 { font-size: 1.1875rem; letter-spacing: -0.02em; }
+
+        .cond-cat {
+            padding: 2px 10px;
+            border: 1px solid var(--line-2);
+            border-radius: 999px;
+            font: 400 0.75rem/1.5 var(--font-mono);
+            color: var(--text-3);
+        }
+
+        .cond p { max-width: 62ch; margin-top: 8px; font-size: 0.9375rem; }
+
+        .cond .signal-row { margin-top: 14px; font: 400 0.8125rem/1.5 var(--font-mono); color: var(--text-3); }
+        .cond .signal-row b { font-weight: 500; color: var(--text); }
+
+        .empty {
+            display: grid;
+            justify-items: start;
+            gap: 12px;
+            padding: 32px 0;
+            border-top: 1px solid var(--line);
+        }
+
+        .empty[hidden] { display: none; }
+        .empty h3 { font-size: 1.1875rem; }
+        .empty p { max-width: 46ch; }
+
+        /* =========================================================
+           WORKFLOW  (a real sequence, so numbered nodes are justified)
+           ========================================================= */
+        .flow { list-style: none; display: grid; gap: 32px; }
+
+        .flow li { position: relative; padding-left: 60px; }
+
+        .flow li:not(:last-child)::after {
+            content: "";
+            position: absolute;
+            left: 19px;
+            top: 48px;
+            bottom: -28px;
+            width: 1px;
+            background: var(--line-2);
+        }
+
+        .node {
+            position: absolute;
+            left: 0;
+            top: 0;
+            display: grid;
+            place-items: center;
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--accent-line);
+            border-radius: 50%;
+            background: var(--bg);
+            color: var(--accent);
+            font: 500 0.875rem/1 var(--font-mono);
+        }
+
+        .flow h3 { font-size: 1.1875rem; letter-spacing: -0.02em; margin-bottom: 8px; padding-top: 7px; }
+        .flow p { font-size: 0.9375rem; max-width: 36ch; }
+
+        @media (min-width: 900px) {
+            .flow { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px; }
+            .flow li { padding: 64px 0 0; }
+            .flow li:not(:last-child)::after { left: 56px; right: -32px; top: 19px; bottom: auto; width: auto; height: 1px; }
+            .flow h3 { padding-top: 0; }
+        }
+
+        /* =========================================================
+           LIMITATIONS
+           ========================================================= */
+        .limits { background: var(--bg-2); border-block: 1px solid var(--line); }
+
+        @media (min-width: 1000px) {
+            .limits .section-head { position: sticky; top: calc(var(--header-h) + 32px); margin-bottom: 0; }
+        }
+
+        .limit-list { list-style: none; border-bottom: 1px solid var(--line); }
+
+        .limit-list li {
+            display: grid;
+            grid-template-columns: 44px minmax(0, 1fr);
+            gap: 16px;
+            padding: 26px 0;
+            border-top: 1px solid var(--line);
+        }
+
+        .limit-list .icon-tile { border-color: var(--warn-line); background: var(--warn-dim); color: var(--warn); }
+        .limit-list h3 { font-size: 1.1875rem; letter-spacing: -0.02em; margin-bottom: 8px; padding-top: 2px; }
+        .limit-list p { max-width: 58ch; font-size: 0.9375rem; }
+
+        /* =========================================================
+           RESEARCH
+           ========================================================= */
+        .tags { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
+
+        .tag {
+            padding: 7px 14px;
+            border: 1px solid var(--line-2);
+            border-radius: 999px;
+            font: 500 0.8125rem/1.3 var(--font-mono);
+            color: var(--text-2);
+        }
+
+        .tag.hot { border-color: var(--accent-line); background: var(--accent-dim); color: var(--accent); }
+
+        .enose { padding: clamp(16px, 2.4vw, 28px); border: 1px solid var(--line-2); border-radius: 20px; background: var(--surface); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08); }
+        .enose svg { width: 100%; height: auto; }
+        .enose text { font: 500 14px var(--font-mono); fill: var(--text-2); }
+        .enose .e-node { fill: var(--surface-solid); stroke: var(--line-2); stroke-width: 1; }
+        .enose .e-node.hot { stroke: var(--accent); fill: var(--accent-dim); }
+        .enose .e-wire { fill: none; stroke: rgba(92, 211, 189, 0.5); stroke-width: 1.25; stroke-dasharray: 4 6; }
+        .enose .e-box { fill: var(--surface-solid); stroke: var(--accent-line); stroke-width: 1.25; }
+        .enose .e-label { fill: var(--text); }
+        .enose .e-out { fill: var(--accent); }
+        .enose figcaption { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 0.8125rem; line-height: 1.55; color: var(--text-3); }
+
+        .basis p + p { margin-top: 16px; }
+        .basis p { max-width: 62ch; }
+        .basis strong { color: var(--text); font-weight: 600; }
+
+        /* =========================================================
+           FAQ
+           ========================================================= */
+        .faq-list { border-bottom: 1px solid var(--line); }
+
+        .faq-item { border-top: 1px solid var(--line); }
+
+        .faq-item summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            min-height: 68px;
+            padding: 18px 0;
+            font: 600 1.0625rem/1.35 var(--font-display);
+            color: var(--text);
+            letter-spacing: -0.01em;
+            cursor: pointer;
+            list-style: none;
+        }
+
+        .faq-item summary::-webkit-details-marker { display: none; }
+
+        .faq-item summary .ic { color: var(--text-2); transition: transform 0.35s var(--ease), color 0.25s; }
+        .faq-item[open] summary .ic { transform: rotate(45deg); color: var(--accent); }
+
+        .faq-body { padding: 0 0 24px; max-width: 62ch; font-size: 0.9375rem; }
+
+        .faq-item[open] .faq-body { animation: faqIn 0.35s var(--ease); }
+
+        @keyframes faqIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: none; }
+        }
+
+        @media (hover: hover) {
+            .faq-item summary:hover { color: var(--accent); }
+        }
+
+        /* =========================================================
+           FINAL CTA
+           ========================================================= */
+        .cta-sec { padding-top: 0; }
+
+        .cta-frame {
+            position: relative;
+            padding: clamp(28px, 6vw, 72px);
+            border: 1px solid var(--line-2);
+            border-radius: 24px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 70%), var(--surface);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            overflow: hidden;
+        }
+
+        .cta-frame::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+            background-size: 48px 48px;
+            -webkit-mask-image: radial-gradient(ellipse 60% 90% at 100% 0%, #000, transparent 70%);
+            mask-image: radial-gradient(ellipse 60% 90% at 100% 0%, #000, transparent 70%);
+        }
+
+        .cta-frame > * { position: relative; }
+
+        .cta-frame h2 { max-width: 18ch; font-size: clamp(1.875rem, 1.1rem + 3vw, 3.25rem); line-height: 1.05; letter-spacing: -0.035em; margin-bottom: 16px; }
+        .cta-frame > p { max-width: 54ch; margin-bottom: 32px; }
+
+        .trust { list-style: none; display: flex; flex-wrap: wrap; gap: 10px 24px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--line); }
+        .trust li { display: inline-flex; align-items: center; gap: 8px; font-size: 0.875rem; color: var(--text-2); }
+        .trust .ic { width: 18px; height: 18px; color: var(--accent); }
+
+        /* =========================================================
+           FOOTER
+           ========================================================= */
+        .site-footer {
+            padding: 64px 0 calc(32px + env(safe-area-inset-bottom));
+            border-top: 1px solid var(--line);
+            background: var(--bg-2);
+            font-size: 0.875rem;
+        }
+
+        .footer-grid { display: grid; gap: 40px; }
+
+        @media (min-width: 720px) {
+            .footer-grid { grid-template-columns: 2fr 1fr 1fr; gap: 56px; }
+        }
+
+        .site-footer h3 { font-size: 0.9375rem; margin-bottom: 14px; }
+        .site-footer p { max-width: 44ch; margin-top: 14px; }
+        .site-footer ul { list-style: none; }
+        .site-footer li { margin: 2px 0; }
+
+        .site-footer li a,
+        .site-footer li span {
+            display: inline-flex;
+            align-items: center;
+            min-height: 36px;
+            color: var(--text-2);
+            text-decoration: none;
+            transition: color 0.25s;
+        }
+
+        .site-footer li span { color: var(--text-3); }
+
+        @media (hover: hover) {
+            .site-footer li a:hover { color: var(--accent); }
+        }
+
+        .copyright {
+            margin-top: 48px;
+            padding-top: 20px;
+            border-top: 1px solid var(--line);
+            font-size: 0.8125rem;
+            color: var(--text-3);
+        }
+
+        /* =========================================================
+           MOTION  (only when the user has not asked for less)
+           ========================================================= */
+        .motion .reveal {
+            opacity: 0;
+            transform: translateY(14px);
+            transition: opacity 0.6s var(--ease) var(--d, 0ms), transform 0.6s var(--ease) var(--d, 0ms);
+        }
+
+        .motion .reveal.in { opacity: 1; transform: none; }
+
+        @media (prefers-reduced-motion: no-preference) {
+            .badge i { animation: pulse 2.4s ease-in-out infinite; }
+            .live-dot { animation: pulse 2.4s ease-in-out infinite; }
+
+            .signal-curve { animation: draw 9s var(--ease) infinite; }
+            .signal-area { animation: areaIn 9s ease-out infinite; }
+
+            .vp { animation: drift 5s ease-in-out infinite alternate; }
+            .vp:nth-child(2) { animation-duration: 6.5s; animation-delay: -1.5s; }
+            .vp:nth-child(3) { animation-duration: 4.2s; animation-delay: -3s; }
+            .vp:nth-child(4) { animation-duration: 7s; animation-delay: -2s; }
+            .vp:nth-child(5) { animation-duration: 5.6s; animation-delay: -4s; }
+
+            .scroll-cue i::after { animation: cue 2.4s var(--ease) infinite; }
+            .enose .e-wire { animation: flow 1.4s linear infinite; }
+        }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+        @keyframes draw {
+            0% { stroke-dashoffset: 1; opacity: 1; }
+            45% { stroke-dashoffset: 0; }
+            85% { stroke-dashoffset: 0; opacity: 1; }
+            100% { stroke-dashoffset: 0; opacity: 0; }
+        }
+
+        @keyframes areaIn {
+            0%, 35% { opacity: 0; }
+            55%, 85% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        @keyframes drift { from { transform: translate(0, 0); } to { transform: translate(12px, -16px); } }
+
+        @keyframes cue {
+            0% { transform: scaleY(0); transform-origin: top; }
+            50% { transform: scaleY(1); transform-origin: top; }
+            51% { transform-origin: bottom; }
+            100% { transform: scaleY(0); transform-origin: bottom; }
+        }
+
+        @keyframes flow { to { stroke-dashoffset: -20; } }
+
+        @media (max-width: 380px) {
+            .hero-stats li { padding-left: 10px; }
+            .chip { padding: 0 12px; }
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- Icon sprite (one stroke width, 1.5, used everywhere) -->
+<svg class="sprite" aria-hidden="true" focusable="false">
+    <symbol id="i-logo" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.25"/><path d="M5.5 12.5h3l1.8-4.5 3.2 8 1.8-3.5h3.2"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.5 2.5 20h19L12 3.5z"/><path d="M12 10v4.5M12 17.4v.1"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.9v.1"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-sensor" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="10" rx="2"/><path d="M8 7V4M12 7V4M16 7V4M8 17v3M12 17v3M16 17v3"/></symbol>
+    <symbol id="i-wind" viewBox="0 0 24 24"><path d="M3 9h10.5a2.5 2.5 0 1 0-2.5-2.5M3 14h14.5a2.5 2.5 0 1 1-2.5 2.5M3 19h6"/></symbol>
+    <symbol id="i-resp" viewBox="0 0 24 24"><path d="M12 3v9"/><path d="M12 12c0 4-2.5 7-6 7-2 0-3-1.5-3-3.5C3 11 5.5 7 9 7c1.7 0 3 1 3 3"/><path d="M12 12c0 4 2.5 7 6 7 2 0 3-1.5 3-3.5C21 11 18.5 7 15 7c-1.7 0-3 1-3 3"/></symbol>
+    <symbol id="i-cancer" viewBox="0 0 24 24"><circle cx="9" cy="10" r="4.25"/><circle cx="16.5" cy="15" r="3.25"/><circle cx="16" cy="6.5" r="1.75"/></symbol>
+    <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3c3 4.2 6 7 6 11a6 6 0 0 1-12 0c0-4 3-6.800 6-11z"/></symbol>
+    <symbol id="i-organ" viewBox="0 0 24 24"><path d="M15 4c3 0 5 3 5 7s-2 9-6 9c-2 0-3-1.500-3-3.200 0-1.500 1-2 1-3.300S11 11.500 10 10.500C9 9.500 9 8 10 6.500 11 5 13 4 15 4z"/></symbol>
+    <symbol id="i-bug" viewBox="0 0 24 24"><ellipse cx="12" cy="13.5" rx="4" ry="5.5"/><path d="M12 8V5M8 11 4 9M16 11l4-2M8 15l-4 2M16 15l4 2M9.500 5l2.500 1 2.500-1"/></symbol>
+</svg>
+
+<div class="top-sentinel" id="topSentinel" aria-hidden="true"></div>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<!-- ================= HEADER ================= -->
+<header class="site-header" id="siteHeader">
+    <div class="wrap header-row">
+
+        <a href="#top" class="brand" aria-label="BreathSense, back to top">
+            <svg class="ic" aria-hidden="true"><use href="#i-logo"/></svg>
+            <span>Breath<b>Sense</b></span>
+        </a>
+
+        <button class="menu-btn" id="menuBtn" type="button"
+                aria-expanded="false" aria-controls="siteNav" aria-label="Open menu">
+            <span class="bar"></span><span class="bar"></span>
+        </button>
+
+        <nav class="site-nav" id="siteNav" aria-label="Primary">
+            <ul>
+                <li><a href="#technology">Technology</a></li>
+                <li><a href="#diseases">Disease research</a></li>
+                <li><a href="#workflow">Workflow</a></li>
+                <li><a href="#limitations">Limitations</a></li>
+                <li><a href="#research">Research</a></li>
+                <li><a href="#faq">FAQ</a></li>
+            </ul>
+            <a class="btn btn-primary btn-sm nav-cta" href="#diseases">Explore research</a>
+        </nav>
+
+    </div>
+</header>
+
+<main id="main">
+
+<!-- ================= HERO ================= -->
+<section class="hero" id="top">
+    <div class="wrap">
+
+        <div class="hero-grid">
+
+            <div>
+                <p class="badge"><i aria-hidden="true"></i>Research platform, not a diagnostic device</p>
+
+                <h1>Breath analysis for non-invasive screening</h1>
+
+                <p class="hero-lead">
+                    Exploring how volatile organic compounds (VOCs) in exhaled breath
+                    can provide biochemical signals associated with disease,
+                    using low-cost gas-sensing technology as a research platform.
+                </p>
+
+                <div class="cta-wrap">
+                    <div class="cta-row">
+                        <a href="#diseases" class="btn btn-primary">
+                            Explore disease research
+                            <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg>
+                        </a>
+                        <a href="#technology" class="btn btn-ghost">Understand MQ-138</a>
+                    </div>
+
+                    <div class="hand-note" aria-hidden="true">
+                        <svg viewBox="0 0 44 56"><path d="M8 50C2 34 10 16 30 7"/><path d="M21 5l10 2-5 9"/></svg>
+                        <span>start here</span>
+                    </div>
+                </div>
+            </div>
+
+            <figure class="signal">
+                <div class="signal-head">
+                    <span class="live-dot" aria-hidden="true"></span>
+                    <span>MQ-138 response</span>
+                    <span class="pill">Illustrative</span>
+                </div>
+
+                <svg class="signal-svg" viewBox="0 0 520 300" role="img"
+                     aria-label="Illustrative sensor response curve: a flat baseline, a sharp rise during exhale, a plateau, then a gradual recovery to baseline.">
+                    <defs>
+                        <linearGradient id="sigFill" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0" stop-color="#5cd3bd" stop-opacity="0.24"/>
+                            <stop offset="1" stop-color="#5cd3bd" stop-opacity="0"/>
+                        </linearGradient>
+                    </defs>
+
+                    <line class="g-line" x1="0" y1="50" x2="520" y2="50"/>
+                    <line class="g-line" x1="0" y1="110" x2="520" y2="110"/>
+                    <line class="g-line" x1="0" y1="170" x2="520" y2="170"/>
+                    <line class="g-line" x1="0" y1="230" x2="520" y2="230"/>
+                    <line class="g-phase" x1="100" y1="20" x2="100" y2="270"/>
+                    <line class="g-phase" x1="330" y1="20" x2="330" y2="270"/>
+                    <line class="g-base" x1="0" y1="270" x2="520" y2="270"/>
+
+                    <path class="signal-area" d="M20 270H100C150 270 160 100 230 96C275 93 300 100 330 112C380 134 400 266 500 270V270H20Z"/>
+                    <path class="signal-curve" pathLength="1" d="M20 270H100C150 270 160 100 230 96C275 93 300 100 330 112C380 134 400 266 500 270"/>
+
+                    <g aria-hidden="true">
+                        <circle class="vp" cx="58" cy="70" r="3.5"/>
+                        <circle class="vp alt" cx="96" cy="44" r="2.5"/>
+                        <circle class="vp" cx="140" cy="82" r="2.5"/>
+                        <circle class="vp alt" cx="34" cy="116" r="3"/>
+                        <circle class="vp" cx="112" cy="136" r="2"/>
+                    </g>
+                </svg>
+
+                <div class="signal-phases" aria-hidden="true">
+                    <span>Baseline</span><span>Exhale</span><span>Recovery</span>
+                </div>
+
+                <figcaption>
+                    Illustrative curve of the features a screening pipeline extracts,
+                    such as response amplitude and recovery. It is not measured data.
+                </figcaption>
+            </figure>
+
+        </div>
+
+        <div class="hero-foot">
+            <ul class="hero-stats">
+                <li><strong>12</strong><span>Conditions covered</span></li>
+                <li><strong>6</strong><span>Gas and vapour groups</span></li>
+                <li><strong>4</strong><span>Pipeline stages</span></li>
+            </ul>
+
+            <a class="scroll-cue" href="#technology" aria-label="Scroll to technology section">
+                Scroll <i aria-hidden="true"></i>
+            </a>
+
+            <p class="credit">
+                <b>Founded by The Dumbbots:</b>
+                Anchit Lokhande, Alfin Abraham, Aditya Patil, Manas Shirsath, Darsh Doshi
+            </p>
+        </div>
+
+    </div>
+</section>
+
+
+<!-- ================= NOTICE ================= -->
+<div class="notice-band">
+    <div class="wrap">
+        <div class="notice reveal" role="note">
+            <svg class="ic" aria-hidden="true"><use href="#i-alert"/></svg>
+            <p>
+                <strong>Important scientific note:</strong>
+                MQ-138 is a broad-response gas sensor. It does
+                <strong>not independently diagnose diseases</strong>.
+                The disease associations shown on this website represent
+                research directions involving breath VOC patterns. Clinical
+                diagnosis requires validated medical tests and qualified
+                healthcare professionals.
+            </p>
+        </div>
+    </div>
+</div>
+
+
+<!-- ================= TECHNOLOGY ================= -->
+<section class="section" id="technology">
+    <div class="wrap">
+
+        <div class="section-head reveal">
+            <h2 class="section-title">What is MQ-138?</h2>
+            <p class="section-lead">
+                MQ-138 is a metal-oxide semiconductor gas sensor designed
+                to respond to several gases and volatile compounds. Its
+                broad sensitivity makes it interesting for experimental
+                electronic-nose and breath-VOC research.
+            </p>
+        </div>
+
+        <div class="tech-grid">
+
+            <article class="panel reveal">
+                <div class="icon-tile"><svg class="ic" aria-hidden="true"><use href="#i-sensor"/></svg></div>
+                <h3>Target gases and vapours</h3>
+                <p>
+                    The MQ-138 datasheet identifies sensitivity toward
+                    several gases and vapours. Exact response depends on
+                    concentration, temperature, humidity, calibration
+                    and the surrounding gas mixture.
+                </p>
+                <ul class="gas-list">
+                    <li class="gas">Benzene</li>
+                    <li class="gas">Alcohols</li>
+                    <li class="gas">Ammonia</li>
+                    <li class="gas">Smoke</li>
+                    <li class="gas">n-Hexane</li>
+                    <li class="gas">VOC mixtures</li>
+                </ul>
+            </article>
+
+            <article class="panel reveal">
+                <div class="icon-tile"><svg class="ic" aria-hidden="true"><use href="#i-wind"/></svg></div>
+                <h3>Why breath analysis?</h3>
+                <p>
+                    Human breath contains volatile organic compounds
+                    generated by metabolic processes and interactions
+                    between the body, lungs and environment.
+                    Researchers investigate these compounds as
+                    potential biomarkers.
+                </p>
+                <dl class="kv-list">
+                    <div class="kv"><dt>Non-invasive</dt><dd>Breath sampling</dd></div>
+                    <div class="kv"><dt>Low-cost</dt><dd>Sensor platform</dd></div>
+                    <div class="kv"><dt>Rapid</dt><dd>Potential screening</dd></div>
+                </dl>
+            </article>
+
+        </div>
+    </div>
+</section>
+
+
+<!-- ================= DISEASES ================= -->
+<section class="section conditions" id="diseases">
+    <div class="wrap split">
+
+        <div class="controls-col">
+            <div class="section-head tight reveal">
+                <h2 class="section-title">Conditions investigated through breath VOCs</h2>
+                <p class="section-lead">
+                    The following conditions have been studied in breath-VOC
+                    research. These should be interpreted as potential research
+                    associations, not as diseases directly detected by a
+                    single MQ-138 sensor.
+                </p>
+            </div>
+
+            <div class="controls reveal">
+                <div role="search">
+                    <label class="field-label" for="search">Search by condition, VOC or organ system</label>
+                    <div class="field">
+                        <svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>
+                        <input type="text" id="search" placeholder="Try acetone or kidney"
+                               autocomplete="off" enterkeyhint="search" spellcheck="false">
+                        <button class="search-clear" id="searchClear" type="button" aria-label="Clear search" hidden>
+                            <svg class="ic" aria-hidden="true"><use href="#i-x"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="chips" role="group" aria-label="Filter by organ system">
+                    <button class="chip" type="button" data-cat="all" aria-pressed="true">All <span>12</span></button>
+                    <button class="chip" type="button" data-cat="resp" aria-pressed="false">Respiratory <span>5</span></button>
+                    <button class="chip" type="button" data-cat="cancer" aria-pressed="false">Cancer <span>2</span></button>
+                    <button class="chip" type="button" data-cat="organ" aria-pressed="false">Liver and kidney <span>3</span></button>
+                    <button class="chip" type="button" data-cat="meta" aria-pressed="false">Metabolic <span>1</span></button>
+                    <button class="chip" type="button" data-cat="infect" aria-pressed="false">Infection <span>1</span></button>
+                </div>
+
+                <p class="result-count" id="resultCount" role="status" aria-live="polite">12 of 12 conditions</p>
+            </div>
+        </div>
+
+        <div>
+            <ul class="cond-list" id="diseaseGrid">
+
+                <li class="cond reveal" data-cat="meta">
+                    <div class="icon-tile"><svg class="ic" aria-hidden="true"><use href="#i-drop"/></svg></div>
+                    <article>
+                        <div class="cond-head"><h3>Diabetes mellitus</h3><span class="cond-cat">Metabolic</span></div>
+                        <p>Altered metabolism can change the concentration of volatile compounds in exhaled breath. Acetone is particularly associated with altered fat metabolism and has been extensively investigated as a breath biomarker.</p>
+                        <p class="signal-row">Research signal: <b>Acetone / ketones</b></p>
+                    </article>
+                </li>
+
+                <li class="cond reveal" data-cat="cancer">
+                    <div class="icon-tile"><svg class="ic" aria-hidden="true"><use href="#i-cancer"/></svg></div>
+                    <article>
+                        <div class="cond-head"><h3>Lung cancer</h3><span class="cond-cat">Cancer</span></div>
+                        <p>Cancer-associated metabolic changes can alter the VOC profile of exhaled breath. Research has explored combinations of hydrocarbons, aldehydes, ketones and other VOCs as potential signatures.</p>
+                        <p class="signal-row">Research signal: <b>Complex VOC pattern</b></p>
+                    </article>
+                </li>
+
+                <li class="cond reveal" data-cat="resp">
+                    <div class="icon-tile"><svg class="ic" aria-hidden="true"><use href="#i-resp"/></svg></div>
+                    <article>
+                        <div class="cond-head"><h3>COPD</h3><span class="cond-cat">Respiratory</span></div>
+                        <p>Chronic inflammation and oxidative stress in the respiratory system can modify exhaled VOC patterns. Electronic-nose approaches have been investigated for distinguishing COPD-related breath profiles.</p>
+                        <p class="signal-row">Research signal: <b>Oxidative-stress VOCs</b></p>
+                    </article>
+                </li>
+
+                <li class="cond reveal" data-cat="resp">
+                    <div class="icon-tile"><svg class="ic" aria-hidden="true"><use href="#i-resp"/></svg></div>
+                    <article>
+                        <div class="cond-head"><h3>Asthma</h3><span class="cond-cat">Respiratory</span></div>
+                        <p>Airway inflammation can influence the chemical composition of exhaled breath. VOC profiling has therefore been investigated as a non-invasive respiratory monitoring approach.</p>
+                        <p class="signal-row">Research signal: <b>Inflammation-associated VOC pattern</b></p>
+                    </article>
+                </li>
+
+                <li class="cond reveal" data-cat="infect">
+                    <div class="icon-tile"><svg class="ic" aria-hidden="true"><use href="#i-bug"/></svg></div>
+                    <article>
+                        <div class="cond-head"><h3>Tuberculosis</h3><span class="cond-cat">Infection</span></div>
+                        <p>Mycobacterial infection and host immune responses can produce changes in volatile compounds. Breath-VOC research has investigated whether these patterns can assist TB screening.</p>
+                        <p class="signal-row">Research signal: <b>Infection-related VOC profile</b></p>
+                    </article>
+                </li>
+
+                <li class="cond reveal" data-cat="organ">
+                    <div class="icon-tile"><svg class="ic" aria-hidden="true"><use href="#i-organ"/></svg></div>
+                    <article>
+                        <div class="cond-head"><h3>Liver disease</h3><span class="cond-cat">Liver and kidney</span></div>
+                        <p>The liver plays a central role in metabolism and detoxification. Impaired liver function can therefore influence circulating and exhaled volatile compounds.</p>
+                        <p class="signal-row">Research signal: <b>Altered metabolic VOCs</b></p>
+                    </article>
+                </li>
+
+                <li class="cond reveal" data-cat="organ">
+                    <div class="icon-tile"><svg class="ic" aria-hidden="true"><use href="#i-organ"/></svg></div>
+                    <article>
+                        <div class="cond-head"><h3>Kidney disease</h3><span class="cond-cat">Liver and kidney</span></div>
+                        <p>Reduced kidney function can alter the concentration of volatile metabolites, including nitrogen-containing compounds. Breath ammonia has been investigated in relation to renal dysfunction.</p>
+                        <p class="signal-row">Research signal: <b>Ammonia / nitrogen compounds</b></p>
+                    </article>
+                </li>
+
+                <li class="cond reveal" data-cat="cancer">
+                    <div class="icon-tile"><svg class="ic" aria-hidden="true"><use href="#i-cancer"/></svg></div>
+                    <article>
+                        <div class="cond-head"><h3>Gastric cancer</h3><span class="cond-cat">Cancer</span></div>
+                        <p>Changes in gastric metabolism and tumour-associated biochemical processes may produce measurable differences in breath VOC patterns.</p>
+                        <p class="signal-row">Research signal: <b>Hydrocarbons / aldehydes / ketones</b></p>
+                    </article>
+                </li>
+
+                <li class="cond reveal" data-cat="organ">
+                    <div class="icon-tile"><svg class="ic" aria-hidden="true"><use href="#i-organ"/></svg></div>
+                    <article>
+                        <div class="cond-head"><h3>Liver cirrhosis</h3><span class="cond-cat">Liver and kidney</span></div>
+                        <p>Advanced liver dysfunction can modify systemic metabolism and consequently change volatile compounds reaching the lungs and exhaled breath.</p>
+                        <p class="signal-row">Research signal: <b>Altered VOC profile</b></p>
+                    </article>
+                </li>
+
+                <li class="cond reveal" data-cat="resp">
+                    <div class="icon-tile"><svg class="ic" aria-hidden="true"><use href="#i-resp"/></svg></div>
+                    <article>
+                        <div class="cond-head"><h3>Cystic fibrosis</h3><span class="cond-cat">Respiratory</span></div>
+                        <p>Chronic airway infection and inflammation in cystic fibrosis can produce characteristic changes in exhaled volatile compounds.</p>
+                        <p class="signal-row">Research signal: <b>Microbial / inflammatory VOCs</b></p>
+                    </article>
+                </li>
+
+                <li class="cond reveal" data-cat="resp">
+                    <div class="icon-tile"><svg class="ic" aria-hidden="true"><use href="#i-resp"/></svg></div>
+                    <article>
+                        <div class="cond-head"><h3>Pulmonary hypertension</h3><span class="cond-cat">Respiratory</span></div>
+                        <p>Altered pulmonary and vascular metabolism can be reflected in breath chemistry. Researchers have investigated VOC and gas signatures associated with pulmonary vascular disease.</p>
+                        <p class="signal-row">Research signal: <b>Complex breath-gas pattern</b></p>
+                    </article>
+                </li>
+
+                <li class="cond reveal" data-cat="resp">
+                    <div class="icon-tile"><svg class="ic" aria-hidden="true"><use href="#i-resp"/></svg></div>
+                    <article>
+                        <div class="cond-head"><h3>Obstructive sleep apnea</h3><span class="cond-cat">Respiratory</span></div>
+                        <p>Repeated changes in respiration, oxygenation and metabolism during sleep may influence exhaled breath composition.</p>
+                        <p class="signal-row">Research signal: <b>Altered respiratory VOC pattern</b></p>
+                    </article>
+                </li>
+
+            </ul>
+
+            <div class="empty" id="emptyState" hidden>
+                <div class="icon-tile"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg></div>
+                <h3 id="emptyTitle">No matching conditions</h3>
+                <p>Try a broader term, a VOC such as acetone or ammonia, or an organ system such as lung or liver.</p>
+                <button class="btn btn-ghost btn-sm" id="resetFilters" type="button">Reset search and filters</button>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+
+<!-- ================= WORKFLOW ================= -->
+<section class="section" id="workflow">
+    <div class="wrap">
+
+        <div class="section-head reveal">
+            <h2 class="section-title">How a breath-VOC screening system could work</h2>
+            <p class="section-lead">
+                A scientifically stronger system uses the MQ-138 as one
+                sensing element within a calibrated measurement and
+                classification pipeline.
+            </p>
+        </div>
+
+        <ol class="flow">
+            <li class="reveal">
+                <span class="node" aria-hidden="true">01</span>
+                <h3>Breath collection</h3>
+                <p>A controlled breath sample is collected using a standardized sampling protocol.</p>
+            </li>
+            <li class="reveal">
+                <span class="node" aria-hidden="true">02</span>
+                <h3>VOC interaction</h3>
+                <p>VOCs interact with the sensor's sensing material, changing its electrical resistance.</p>
+            </li>
+            <li class="reveal">
+                <span class="node" aria-hidden="true">03</span>
+                <h3>Signal processing</h3>
+                <p>Sensor response is digitized, filtered and converted into features such as response amplitude and recovery.</p>
+            </li>
+            <li class="reveal">
+                <span class="node" aria-hidden="true">04</span>
+                <h3>Pattern classification</h3>
+                <p>A validated statistical or machine-learning model can compare the VOC pattern against reference data.</p>
+            </li>
+        </ol>
+
+    </div>
+</section>
+
+
+<!-- ================= LIMITATIONS ================= -->
+<section class="section limits" id="limitations">
+    <div class="wrap split">
+
+        <div class="section-head reveal">
+            <h2 class="section-title">What the sensor cannot claim</h2>
+            <p class="section-lead">
+                Responsible medical technology requires clear boundaries
+                between experimental screening and clinical diagnosis.
+            </p>
+        </div>
+
+        <ul class="limit-list">
+            <li class="reveal">
+                <div class="icon-tile"><svg class="ic" aria-hidden="true"><use href="#i-alert"/></svg></div>
+                <div>
+                    <h3>Not a standalone diagnostic device</h3>
+                    <p>MQ-138 responds to chemical compounds, not to disease names. A disease cannot be inferred from one gas measurement alone.</p>
+                </div>
+            </li>
+            <li class="reveal">
+                <div class="icon-tile"><svg class="ic" aria-hidden="true"><use href="#i-alert"/></svg></div>
+                <div>
+                    <h3>Cross-sensitivity</h3>
+                    <p>Metal-oxide sensors can respond to multiple gases. Food, medication, smoking, environmental pollution and humidity can affect measurements.</p>
+                </div>
+            </li>
+            <li class="reveal">
+                <div class="icon-tile"><svg class="ic" aria-hidden="true"><use href="#i-alert"/></svg></div>
+                <div>
+                    <h3>Sensor drift</h3>
+                    <p>Sensor characteristics can change with time, temperature, humidity and operating history. Calibration is therefore essential.</p>
+                </div>
+            </li>
+            <li class="reveal">
+                <div class="icon-tile"><svg class="ic" aria-hidden="true"><use href="#i-alert"/></svg></div>
+                <div>
+                    <h3>Clinical validation required</h3>
+                    <p>A public medical product requires controlled clinical studies, reference testing, statistical validation, appropriate regulatory review and defined performance metrics.</p>
+                </div>
+            </li>
+        </ul>
+
+    </div>
+</section>
+
+
+<!-- ================= RESEARCH ================= -->
+<section class="section" id="research">
+    <div class="wrap split">
+
+        <div class="reveal">
+            <h2 class="section-title">From a single gas sensor to an electronic nose</h2>
+            <p class="section-lead">
+                The strongest research direction is not to assign a
+                disease to one MQ-138 reading. Instead, an electronic-nose
+                architecture can combine several partially selective
+                sensors and machine-learning algorithms to recognize
+                multivariate VOC patterns.
+            </p>
+
+            <ul class="tags">
+                <li class="tag hot">MQ-138</li>
+                <li class="tag">MQ-135</li>
+                <li class="tag">VOC sensing</li>
+                <li class="tag">Temperature</li>
+                <li class="tag">Humidity</li>
+                <li class="tag">Signal processing</li>
+                <li class="tag">Machine learning</li>
+                <li class="tag">Pattern recognition</li>
+                <li class="tag">Clinical validation</li>
+            </ul>
+        </div>
+
+        <figure class="enose reveal">
+            <svg viewBox="0 0 460 250" role="img"
+                 aria-label="Diagram: four inputs, MQ-138, MQ-135, temperature and humidity, feed one classifier that outputs a VOC pattern.">
+                <g>
+                    <path class="e-wire" d="M116 40 C 190 40, 190 125, 250 125"/>
+                    <path class="e-wire" d="M116 95 C 190 95, 190 125, 250 125"/>
+                    <path class="e-wire" d="M116 155 C 190 155, 190 125, 250 125"/>
+                    <path class="e-wire" d="M116 210 C 190 210, 190 125, 250 125"/>
+                    <path class="e-wire" d="M350 125 H410"/>
+                </g>
+                <g>
+                    <text x="0" y="45">MQ-138</text>
+                    <text x="0" y="100">MQ-135</text>
+                    <text x="0" y="160">Temp</text>
+                    <text x="0" y="215">Humidity</text>
+                    <circle class="e-node hot" cx="104" cy="40" r="11"/>
+                    <circle class="e-node" cx="104" cy="95" r="11"/>
+                    <circle class="e-node" cx="104" cy="155" r="11"/>
+                    <circle class="e-node" cx="104" cy="210" r="11"/>
+                </g>
+                <rect class="e-box" x="250" y="90" width="100" height="70" rx="12"/>
+                <text class="e-label" x="300" y="130" text-anchor="middle">Model</text>
+                <circle class="e-out" cx="424" cy="125" r="9"/>
+                <text x="424" y="158" text-anchor="middle">Pattern</text>
+            </svg>
+            <figcaption>Illustrative architecture. Several partially selective sensors feed one validated model instead of a single reading standing for a disease.</figcaption>
+        </figure>
+
+    </div>
+</section>
+
+
+<!-- ================= SOURCES ================= -->
+<section class="section flush-top">
+    <div class="wrap split basis">
+        <div class="reveal">
+            <h2 class="section-title">Scientific foundation</h2>
+        </div>
+        <div class="reveal">
+            <p>
+                This educational interface is based on published
+                breath-VOC research and MQ-series sensor documentation.
+                Breath-VOC research has investigated respiratory,
+                metabolic, liver, kidney and cancer-related conditions.
+                However, current scientific literature highlights
+                challenges involving selectivity, sensor drift,
+                reproducibility, sampling protocols and clinical
+                validation.
+            </p>
+            <p>
+                The intended role of this platform is therefore
+                <strong>research and screening technology exploration</strong>,
+                not replacement of established medical diagnosis.
+            </p>
+        </div>
+    </div>
+</section>
+
+
+<!-- ================= FAQ ================= -->
+<section class="section conditions" id="faq">
+    <div class="wrap split">
+
+        <div class="section-head reveal">
+            <h2 class="section-title">Common questions</h2>
+            <p class="section-lead">Short answers on what BreathSense is, and what it is not.</p>
+        </div>
+
+        <div class="faq-list reveal">
+
+            <details class="faq-item" name="faq" open>
+                <summary>Can BreathSense diagnose a disease?<svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></summary>
+                <div class="faq-body">
+                    <p>No. MQ-138 responds to chemical compounds, not to disease names, so a disease cannot be inferred from one gas measurement. Diagnosis requires validated medical tests and qualified healthcare professionals.</p>
+                </div>
+            </details>
+
+            <details class="faq-item" name="faq">
+                <summary>Why use an MQ-138 sensor at all?<svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></summary>
+                <div class="faq-body">
+                    <p>It is a low-cost metal-oxide sensor with broad sensitivity, which makes it a practical starting point for experimental electronic-nose and breath-VOC research.</p>
+                </div>
+            </details>
+
+            <details class="faq-item" name="faq">
+                <summary>What can distort a reading?<svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></summary>
+                <div class="faq-body">
+                    <p>Food, medication, smoking, environmental pollution and humidity can all affect measurements. Sensor characteristics also drift with time, temperature, humidity and operating history, so calibration is essential.</p>
+                </div>
+            </details>
+
+            <details class="faq-item" name="faq">
+                <summary>What would a stronger system look like?<svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></summary>
+                <div class="faq-body">
+                    <p>An electronic-nose design that combines several partially selective sensors with machine-learning models, inside a calibrated pipeline: sampling, sensing, signal processing, then pattern classification.</p>
+                </div>
+            </details>
+
+            <details class="faq-item" name="faq">
+                <summary>What is needed before this could be a medical product?<svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></summary>
+                <div class="faq-body">
+                    <p>Controlled clinical studies, reference testing, statistical validation, appropriate regulatory review and defined performance metrics.</p>
+                </div>
+            </details>
+
+        </div>
+
+    </div>
+</section>
+
+
+<!-- ================= FINAL CTA ================= -->
+<section class="section cta-sec">
+    <div class="wrap">
+        <div class="cta-frame reveal">
+            <h2>Read the evidence, then read the limits</h2>
+            <p>
+                Browse 12 conditions studied in breath-VOC research, then see
+                exactly what a single gas sensor can and cannot claim.
+            </p>
+
+            <div class="cta-row">
+                <a href="#diseases" class="btn btn-primary">
+                    Explore disease research
+                    <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg>
+                </a>
+                <a href="#limitations" class="btn btn-ghost">Read the limitations</a>
+            </div>
+
+            <ul class="trust">
+                <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Research use only</li>
+                <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Not a diagnosis</li>
+                <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Clinical validation required</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+</main>
+
+
+<!-- ================= FOOTER ================= -->
+<footer class="site-footer">
+    <div class="wrap">
+
+        <div class="footer-grid">
+
+            <div>
+                <a href="#top" class="brand" aria-label="BreathSense, back to top">
+                    <svg class="ic" aria-hidden="true"><use href="#i-logo"/></svg>
+                    <span>Breath<b>Sense</b></span>
+                </a>
+                <p>
+                    A research-oriented concept for non-invasive breath
+                    VOC screening using low-cost gas sensing and intelligent
+                    pattern recognition.
+                </p>
+            </div>
+
+            <nav aria-label="Platform">
+                <h3>Platform</h3>
+                <ul>
+                    <li><a href="#technology">MQ-138 technology</a></li>
+                    <li><a href="#workflow">Breath VOC workflow</a></li>
+                    <li><a href="#diseases">Disease research</a></li>
+                    <li><a href="#research">Machine learning</a></li>
+                </ul>
+            </nav>
+
+            <div>
+                <h3>Important</h3>
+                <ul>
+                    <li><span>Research use</span></li>
+                    <li><span>Not a diagnosis</span></li>
+                    <li><span>Clinical validation required</span></li>
+                    <li><span>Professional medical advice required</span></li>
+                </ul>
+            </div>
+
+        </div>
+
+        <p class="copyright">
+            &copy; 2026 BreathSense Research Platform.
+            Educational and research presentation interface.
+        </p>
+
+    </div>
+</footer>
+
+
+<script>
+(function () {
+    "use strict";
+
+    var $ = function (s, c) { return (c || document).querySelector(s); };
+    var $$ = function (s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); };
+    var root = document.documentElement;
+    var motion = root.classList.contains("motion");
+
+    /* ---------- Header: glass state via sentinel (no scroll listener) ---------- */
+    var header = $("#siteHeader");
+    if ("IntersectionObserver" in window) {
+        new IntersectionObserver(function (e) {
+            header.classList.toggle("scrolled", !e[0].isIntersecting);
+        }).observe($("#topSentinel"));
+    } else {
+        header.classList.add("scrolled");
+    }
+
+    /* ---------- Mobile menu ---------- */
+    var btn = $("#menuBtn"), nav = $("#siteNav");
+
+    function setMenu(open) {
+        nav.classList.toggle("open", open);
+        btn.setAttribute("aria-expanded", String(open));
+        btn.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+        root.classList.toggle("menu-open", open);
+    }
+
+    btn.addEventListener("click", function () { setMenu(!nav.classList.contains("open")); });
+
+    nav.addEventListener("click", function (e) {
+        if (e.target.closest("a")) setMenu(false);
+    });
+
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && nav.classList.contains("open")) { setMenu(false); btn.focus(); }
+    });
+
+    var desktop = window.matchMedia("(min-width: 900px)");
+    var onBreakpoint = function (e) { if (e.matches) setMenu(false); };
+    if (desktop.addEventListener) desktop.addEventListener("change", onBreakpoint);
+    else desktop.addListener(onBreakpoint);
+
+    /* ---------- Scroll reveal ---------- */
+    var reveals = $$(".reveal");
+    if (motion && "IntersectionObserver" in window) {
+        var rio = new IntersectionObserver(function (entries) {
+            entries.forEach(function (en) {
+                if (en.isIntersecting) { en.target.classList.add("in"); rio.unobserve(en.target); }
+            });
+        }, { rootMargin: "0px 0px -6% 0px", threshold: 0.06 });
+
+        reveals.forEach(function (el) {
+            var sibs = $$(".reveal", el.parentElement).filter(function (s) { return s.parentElement === el.parentElement; });
+            el.style.setProperty("--d", Math.min(sibs.indexOf(el), 5) * 70 + "ms");
+            rio.observe(el);
+        });
+    } else {
+        reveals.forEach(function (el) { el.classList.add("in"); });
+    }
+
+    /* ---------- Active nav link ---------- */
+    if ("IntersectionObserver" in window) {
+        var links = {};
+        $$(".site-nav ul a").forEach(function (a) { links[a.getAttribute("href").slice(1)] = a; });
+
+        var sio = new IntersectionObserver(function (entries) {
+            entries.forEach(function (en) {
+                if (!en.isIntersecting) return;
+                Object.keys(links).forEach(function (k) { links[k].removeAttribute("aria-current"); });
+                if (links[en.target.id]) links[en.target.id].setAttribute("aria-current", "true");
+            });
+        }, { rootMargin: "-45% 0px -50% 0px" });
+
+        $$("section[id]").forEach(function (s) { sio.observe(s); });
+    }
+
+    /* ---------- Condition search + category filter ---------- */
+    var input = $("#search"), clear = $("#searchClear"), count = $("#resultCount");
+    var empty = $("#emptyState"), emptyTitle = $("#emptyTitle");
+    var chips = $$(".chip"), rows = $$(".cond");
+    var cat = "all";
+
+    function apply() {
+        var raw = input.value.trim();
+        var q = raw.toLowerCase();
+        var n = 0;
+
+        rows.forEach(function (r) {
+            var ok = (cat === "all" || r.dataset.cat === cat) &&
+                     (!q || r.textContent.toLowerCase().indexOf(q) !== -1);
+            r.hidden = !ok;
+            if (ok) n++;
+        });
+
+        count.textContent = n + " of " + rows.length + " conditions";
+        clear.hidden = !input.value;
+        empty.hidden = n !== 0;
+
+        if (n === 0) {
+            emptyTitle.textContent = raw ? "No conditions match \u201C" + raw + "\u201D" : "No conditions in this group";
+        }
+    }
+
+    input.addEventListener("input", apply);
+
+    input.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && input.value) { input.value = ""; apply(); }
+    });
+
+    clear.addEventListener("click", function () { input.value = ""; apply(); input.focus(); });
+
+    chips.forEach(function (c) {
+        c.addEventListener("click", function () {
+            cat = c.dataset.cat;
+            chips.forEach(function (o) { o.setAttribute("aria-pressed", String(o === c)); });
+            apply();
+        });
+    });
+
+    $("#resetFilters").addEventListener("click", function () {
+        input.value = "";
+        cat = "all";
+        chips.forEach(function (o) { o.setAttribute("aria-pressed", String(o.dataset.cat === "all")); });
+        apply();
+        input.focus();
+    });
+})();
+</script>
+
+</body>
+</html>
